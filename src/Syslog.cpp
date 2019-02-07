@@ -14,6 +14,7 @@ Syslog::Syslog(UDP &client, uint8_t protocol) {
   this->_deviceHostname = SYSLOG_NILVALUE;
   this->_appName = SYSLOG_NILVALUE;
   this->_priDefault = LOG_KERN;
+  this->_serial = 0;
 }
 
 Syslog::Syslog(UDP &client, const char* server, uint16_t port, const char* deviceHostname, const char* appName, uint16_t priDefault, uint8_t protocol) {
@@ -24,6 +25,7 @@ Syslog::Syslog(UDP &client, const char* server, uint16_t port, const char* devic
   this->_deviceHostname = (deviceHostname == NULL) ? SYSLOG_NILVALUE : deviceHostname;
   this->_appName = (appName == NULL) ? SYSLOG_NILVALUE : appName;
   this->_priDefault = priDefault;
+  this->_serial = 0;
 }
 
 Syslog::Syslog(UDP &client, IPAddress ip, uint16_t port, const char* deviceHostname, const char* appName, uint16_t priDefault, uint8_t protocol) {
@@ -35,6 +37,7 @@ Syslog::Syslog(UDP &client, IPAddress ip, uint16_t port, const char* deviceHostn
   this->_deviceHostname = (deviceHostname == NULL) ? SYSLOG_NILVALUE : deviceHostname;
   this->_appName = (appName == NULL) ? SYSLOG_NILVALUE : appName;
   this->_priDefault = priDefault;
+  this->_serial = 0;
 }
 
 Syslog &Syslog::server(const char* server, uint16_t port) {
@@ -230,6 +233,12 @@ inline bool Syslog::_sendLog(uint16_t pri, const char *message) {
   this->_client->print(message);
   this->_client->endPacket();
 
+  if(this->_serial) {
+    Serial.print(this->_getPriorityString(pri).c_str());
+    Serial.print(": ");
+    Serial.println(message);
+  }
+
   return true;
 }
 
@@ -278,4 +287,53 @@ inline bool Syslog::_sendLog(uint16_t pri, const __FlashStringHelper *message) {
 
 
   return true;
+}
+
+void Syslog::setSerialPrint(bool serialPrint) {
+    this->_serial = serialPrint;
+}
+
+String Syslog::_getPriorityString(uint16_t pri) {
+   String priorityName;
+
+   switch (pri)
+   {
+   case LOG_EMERG:
+      priorityName = "EMERGENCY";
+      break;
+
+   case LOG_ALERT:
+      priorityName = "ALERT";
+      break;
+
+   case LOG_CRIT:
+      priorityName = "CRITICAL";
+      break;
+
+   case LOG_ERR:
+      priorityName = "ERROR";
+      break;
+
+   case LOG_WARNING:
+      priorityName = "WARNING";
+      break;
+
+   case LOG_NOTICE:
+      priorityName = "NOTICE";
+      break;
+
+   case LOG_INFO:
+      priorityName = "INFO";
+      break;
+
+   case LOG_DEBUG:
+      priorityName = "DEBUG";
+      break;
+
+   default:
+      priorityName = "UNKNOWN";
+      break;
+   }
+
+   return priorityName;
 }

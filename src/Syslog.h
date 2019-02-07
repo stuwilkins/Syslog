@@ -91,6 +91,7 @@ class Syslog {
     const char* _appName;
     uint16_t _priDefault;
     uint8_t _priMask = 0xff;
+    bool _serial;
 
     bool _sendLog(uint16_t pri, const char *message);
     bool _sendLog(uint16_t pri, const __FlashStringHelper *message);
@@ -124,6 +125,9 @@ class Syslog {
     bool log(const __FlashStringHelper *message);
     bool log(const String &message);
     bool log(const char *message);
+
+    void setSerialPrint(bool serialPrint);
+    String _getPriorityString(uint16_t pri);
 };
 
 #endif
