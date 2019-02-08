@@ -80,15 +80,6 @@
 #define LOG_MASK(pri)  (1 << (pri))	/* mask for one priority */
 #define LOG_UPTO(pri)  ((1 << ((pri)+1)) - 1)	/* all priorities through pri */
 
-struct NullStream : public Stream {
- NullStream( void ) { return; }
- int available( void ) { return 0; }
- void flush( void ) { return; }
- int peek( void ) { return -1; }
- int read( void ){ return -1; }
- size_t write( uint8_t u_Data ){ return 0; }
-};
-
 class Syslog {
   private:
     UDP* _client;
@@ -100,8 +91,8 @@ class Syslog {
     const char* _appName;
     uint16_t _priDefault;
     uint8_t _priMask = 0xff;
+    uint8_t _serialPriMask = 0xff;
     Stream *_serial;
-    uint16_t _serialPriMask;
 
     bool _sendLog(uint16_t pri, const char *message);
     bool _sendLog(uint16_t pri, const __FlashStringHelper *message);
@@ -120,8 +111,8 @@ class Syslog {
 
     Syslog &logMask(uint8_t priMask);
 
-    Syslog &setSerial(Stream *serial);
-    Syslog &setSerialMask(uint8_t priMask);
+    Syslog &serial(Stream *serial);
+    Syslog &serialMask(uint8_t priMask);
 
     bool log(uint16_t pri, const __FlashStringHelper *message);
     bool log(uint16_t pri, const String &message);

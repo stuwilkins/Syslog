@@ -73,12 +73,12 @@ Syslog &Syslog::logMask(uint8_t priMask) {
   return *this;
 }
 
-Syslog &Syslog::setSerial(Stream *serial) {
+Syslog &Syslog::serial(Stream *serial) {
     this->_serial = serial;
     return *this;
 }
 
-Syslog &Syslog::setSerialMask(uint8_t priMask) {
+Syslog &Syslog::serialMask(uint8_t priMask) {
   this->_serialPriMask = priMask;
   return *this;
 }
@@ -203,7 +203,7 @@ inline bool Syslog::_sendLog(uint16_t pri, const char *message) {
   int result;
 
   if(this->_serial != NULL) {
-    if((LOG_MASK(LOG_PRI(pri)) & this->_serialPriMask) == 0) {
+    if((LOG_MASK(LOG_PRI(pri)) & this->_serialPriMask) != 0) {
         this->_serial->print(this->_getPriorityString(pri).c_str());
         this->_serial->print(": ");
         this->_serial->println(message);
@@ -257,7 +257,7 @@ inline bool Syslog::_sendLog(uint16_t pri, const __FlashStringHelper *message) {
   int result;
 
   if(this->_serial != NULL) {
-    if((LOG_MASK(LOG_PRI(pri)) & this->_serialPriMask) == 0) {
+    if((LOG_MASK(LOG_PRI(pri)) & this->_serialPriMask) != 0) {
         this->_serial->print(this->_getPriorityString(pri).c_str());
         this->_serial->print(": ");
         this->_serial->println(message);
