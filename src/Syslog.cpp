@@ -14,7 +14,7 @@ Syslog::Syslog(UDP &client, uint8_t protocol) {
   this->_deviceHostname = SYSLOG_NILVALUE;
   this->_appName = SYSLOG_NILVALUE;
   this->_priDefault = LOG_KERN;
-  this->_serial = 0;
+  this->_serial = NULL;
 }
 
 Syslog::Syslog(UDP &client, const char* server, uint16_t port, const char* deviceHostname, const char* appName, uint16_t priDefault, uint8_t protocol) {
@@ -25,7 +25,7 @@ Syslog::Syslog(UDP &client, const char* server, uint16_t port, const char* devic
   this->_deviceHostname = (deviceHostname == NULL) ? SYSLOG_NILVALUE : deviceHostname;
   this->_appName = (appName == NULL) ? SYSLOG_NILVALUE : appName;
   this->_priDefault = priDefault;
-  this->_serial = 0;
+  this->_serial = NULL;
 }
 
 Syslog::Syslog(UDP &client, IPAddress ip, uint16_t port, const char* deviceHostname, const char* appName, uint16_t priDefault, uint8_t protocol) {
@@ -37,7 +37,7 @@ Syslog::Syslog(UDP &client, IPAddress ip, uint16_t port, const char* deviceHostn
   this->_deviceHostname = (deviceHostname == NULL) ? SYSLOG_NILVALUE : deviceHostname;
   this->_appName = (appName == NULL) ? SYSLOG_NILVALUE : appName;
   this->_priDefault = priDefault;
-  this->_serial = 0;
+  this->_serial = NULL;
 }
 
 Syslog &Syslog::server(const char* server, uint16_t port) {
@@ -73,6 +73,15 @@ Syslog &Syslog::logMask(uint8_t priMask) {
   return *this;
 }
 
+Syslog &Syslog::setSerial(Stream *serial) {
+    this->_serial = serial;
+    return *this;
+}
+
+Syslog &Syslog::setSerialMask(uint8_t priMask) {
+  this->_serialPriMask = priMask;
+  return *this;
+}
 
 bool Syslog::log(uint16_t pri, const __FlashStringHelper *message) {
   return this->_sendLog(pri, message);
@@ -193,6 +202,14 @@ bool Syslog::log(const char *message) {
 inline bool Syslog::_sendLog(uint16_t pri, const char *message) {
   int result;
 
+  if(this->_serial != NULL) {
+    if((LOG_MASK(LOG_PRI(pri)) & this->_serialPriMask) == 0) {
+        this->_serial->print(this->_getPriorityString(pri).c_str());
+        this->_serial->print(": ");
+        this->_serial->println(message);
+    }
+  }
+
   if ((this->_server == NULL && this->_ip == INADDR_NONE) || this->_port == 0)
     return false;
 
@@ -232,12 +249,6 @@ inline bool Syslog::_sendLog(uint16_t pri, const char *message) {
   }
   this->_client->print(message);
   this->_client->endPacket();
-
-  if(this->_serial) {
-    Serial.print(this->_getPriorityString(pri).c_str());
-    Serial.print(": ");
-    Serial.println(message);
-  }
 
   return true;
 }
@@ -245,6 +256,14 @@ inline bool Syslog::_sendLog(uint16_t pri, const char *message) {
 inline bool Syslog::_sendLog(uint16_t pri, const __FlashStringHelper *message) {
   int result;
 
+  if(this->_serial != NULL) {
+    if((LOG_MASK(LOG_PRI(pri)) & this->_serialPriMask) == 0) {
+        this->_serial->print(this->_getPriorityString(pri).c_str());
+        this->_serial->print(": ");
+        this->_serial->println(message);
+    }
+  }
+
   if ((this->_server == NULL && this->_ip == INADDR_NONE) || this->_port == 0)
     return false;
 
@@ -287,10 +306,6 @@ inline bool Syslog::_sendLog(uint16_t pri, const __FlashStringHelper *message) {
 
 
   return true;
-}
-
-void Syslog::setSerialPrint(bool serialPrint) {
-    this->_serial = serialPrint;
 }
 
 String Syslog::_getPriorityString(uint16_t pri) {
